@@ -1,0 +1,32 @@
+{
+  "name": "shieldo/solarium-async-plugin",
+  "description": "A package making available a plugin that can fetch Solarium query results as HTTPlug promises, allowing async fetches.",
+  "type": "library",
+  "autoload": {
+    "psr-4": {
+      "Shieldo\\GuzzleAsyncPlugin\\": [
+        "src"
+      ]
+    }
+  },
+  "require": {
+    "php": ">=5.5",
+    "solarium/solarium": "^3.8",
+    "php-http/httplug": "^1",
+    "php-http/promise": "^1",
+    "php-http/guzzle6-adapter": "^1",
+    "php-http/message-factory": "^1",
+    "php-http/message": "^1",
+    "php-http/client-common": "^1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~4"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Douglas Greenshields",
+      "email": "douglas@usemarkup.com"
+    }
+  ]
+}
