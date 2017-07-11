@@ -11,6 +11,7 @@ use Http\Message\MessageFactory\GuzzleMessageFactory;
 use Http\Message\RequestFactory;
 use Http\Promise\Promise;
 use Psr\Http\Message\ResponseInterface;
+use Solarium\Core\Client\Adapter\Guzzle;
 use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Client\Response;
 use Solarium\Core\Plugin\AbstractPlugin;
@@ -35,7 +36,15 @@ class AsyncPlugin extends AbstractPlugin
      */
     public function queryAsync($query, $endpoint = null)
     {
-        $asyncClient = $this->asyncClient ?: new Guzzle6Adapter($this->client->getAdapter()->getGuzzleClient());
+        if (null !== $this->asyncClient) {
+            $asyncClient = $this->asyncClient;
+            $usingGuzzle = false;
+        } else {
+            $existingSolariumAdapter = $this->client->getAdapter(false);
+            $this->client->setAdapter(Guzzle::class);
+            $asyncClient = new Guzzle6Adapter($this->client->getAdapter()->getGuzzleClient());
+            $usingGuzzle = true;
+        }
         $request = $this->client->createRequest($query);
         $method = $request->getMethod();
         $endpoint = $this->client->getEndpoint($endpoint);
@@ -55,7 +64,7 @@ class AsyncPlugin extends AbstractPlugin
             $asyncClient = new PluginClient($asyncClient, [$authenticationPlugin]);
         }
 
-        return $asyncClient->sendAsyncRequest($request)
+        $promise = $asyncClient->sendAsyncRequest($request)
             ->then(
                 function (ResponseInterface $response) {
                     $responseHeaders = [
@@ -70,6 +79,13 @@ class AsyncPlugin extends AbstractPlugin
                     return new Response((string) $response->getBody(), $responseHeaders);
                 }
             );
+
+        if ($usingGuzzle) {
+            //set the solarium adapter state back
+            $this->client->setAdapter($existingSolariumAdapter);
+        }
+
+        return $promise;
     }
 
     public function setAsyncClient(HttpAsyncClient $asyncClient)
