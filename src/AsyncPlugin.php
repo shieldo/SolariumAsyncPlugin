@@ -1,6 +1,6 @@
 <?php
 
-namespace Shieldo\AsyncPlugin;
+namespace Shieldo;
 
 use Http\Adapter\Guzzle6\Client as Guzzle6Adapter;
 use Http\Client\Common\Plugin\AuthenticationPlugin;
