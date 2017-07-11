@@ -1,6 +1,7 @@
 {
   "name": "shieldo/solarium-async-plugin",
   "description": "A package making available a plugin that can fetch Solarium query results as HTTPlug promises, allowing async fetches.",
+  "keywords": ["solarium", "solr", "php", "httplug", "guzzle", "async"],
   "type": "library",
   "autoload": {
     "psr-4": {
