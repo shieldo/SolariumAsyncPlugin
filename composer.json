@@ -23,6 +23,9 @@
   "require-dev": {
     "phpunit/phpunit": "~4"
   },
+  "conflict": {
+    "php-http/message-factory": "<1.0.2"
+  },
   "license": "MIT",
   "authors": [
     {
