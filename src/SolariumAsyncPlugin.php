@@ -18,7 +18,7 @@ use Solarium\Core\Client\Response;
 use Solarium\Core\Plugin\AbstractPlugin;
 use Solarium\Core\Query\AbstractQuery;
 
-class AsyncPlugin extends AbstractPlugin
+class SolariumAsyncPlugin extends AbstractPlugin
 {
     /**
      * @var HttpAsyncClient
