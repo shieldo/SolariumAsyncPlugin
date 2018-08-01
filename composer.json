@@ -11,8 +11,8 @@
     }
   },
   "require": {
-    "php": ">=5.5",
-    "solarium/solarium": "^3.8",
+    "php": "^7",
+    "solarium/solarium": "^4",
     "php-http/httplug": "^1",
     "php-http/promise": "^1",
     "php-http/guzzle6-adapter": "^1",

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.3.0
+
+- Drop PHP <7.0 support.
+- Require Solarium 4.
+
 ## 0.2.0
 
 - Change plugin class name from Shieldo\AsyncPlugin to Shieldo\SolariumAsyncPlugin
