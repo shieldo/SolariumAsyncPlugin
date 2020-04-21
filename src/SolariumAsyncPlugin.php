@@ -15,8 +15,12 @@ use Solarium\Core\Client\Adapter\Guzzle as GuzzleAdapter;
 use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Client\Request;
 use Solarium\Core\Client\Response;
+use Solarium\Core\Event\Events;
+use Solarium\Core\Event\PostExecuteRequest as PostExecuteRequestEvent;
+use Solarium\Core\Event\PreExecuteRequest as PreExecuteRequestEvent;
 use Solarium\Core\Plugin\AbstractPlugin;
 use Solarium\Core\Query\AbstractQuery;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SolariumAsyncPlugin extends AbstractPlugin
 {
@@ -31,6 +35,12 @@ class SolariumAsyncPlugin extends AbstractPlugin
     private $requestFactory;
 
     /**
+     * @var EventDispatcherInterface|null
+     */
+    private $eventDispatcher;
+
+
+    /**
      * @param AbstractQuery        $query
      * @param string|Endpoint|null $endpoint
      * @return Promise
@@ -38,16 +48,23 @@ class SolariumAsyncPlugin extends AbstractPlugin
     public function queryAsync($query, $endpoint = null)
     {
         $asyncClient = $this->asyncClient ?: new Guzzle6Adapter($this->client->getAdapter()->getGuzzleClient());
-        $request = $this->client->createRequest($query);
-        $method = $request->getMethod();
+        $solariumRequest = $this->client->createRequest($query);
+        $method = $solariumRequest->getMethod();
         $endpoint = $this->client->getEndpoint($endpoint);
+
+        if ($this->eventDispatcher) {
+            $this->eventDispatcher->dispatch(
+                Events::PRE_EXECUTE_REQUEST,
+                new PreExecuteRequestEvent($solariumRequest, $endpoint)
+            );
+        }
 
         $requestFactory = $this->requestFactory ?: new GuzzleMessageFactory();
         $request = $requestFactory->createRequest(
             $method,
-            $endpoint->getBaseUri().$request->getUri(),
-            $this->getRequestHeaders($request),
-            $this->getRequestBody($request)
+            $endpoint->getBaseUri().$solariumRequest->getUri(),
+            $this->getRequestHeaders($solariumRequest),
+            $this->getRequestBody($solariumRequest)
         );
 
         $authData = $endpoint->getAuthentication();
@@ -57,9 +74,10 @@ class SolariumAsyncPlugin extends AbstractPlugin
             $asyncClient = new PluginClient($asyncClient, [$authenticationPlugin]);
         }
 
+
         return $asyncClient->sendAsyncRequest($request)
             ->then(
-                function (ResponseInterface $response) {
+                function (ResponseInterface $response) use ($solariumRequest, $endpoint) {
                     $responseHeaders = [
                         "HTTP/{$response->getProtocolVersion()} {$response->getStatusCode()} "
                         . $response->getReasonPhrase(),
@@ -69,7 +87,16 @@ class SolariumAsyncPlugin extends AbstractPlugin
                         $responseHeaders[] = "{$key}: " . implode(', ', $value);
                     }
 
-                    return new Response((string) $response->getBody(), $responseHeaders);
+                    $response = new Response((string) $response->getBody(), $responseHeaders);
+
+                    if ($this->eventDispatcher) {
+                        $this->eventDispatcher->dispatch(
+                            Events::POST_EXECUTE_REQUEST,
+                            new PostExecuteRequestEvent($solariumRequest, $endpoint, $response)
+                        );
+                    }
+
+                    return $response;
                 }
             );
     }
@@ -84,6 +111,13 @@ class SolariumAsyncPlugin extends AbstractPlugin
     public function setRequestFactory(RequestFactory $requestFactory)
     {
         $this->requestFactory = $requestFactory;
+
+        return $this;
+    }
+
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
+    {
+        $this->eventDispatcher = $eventDispatcher;
 
         return $this;
     }
